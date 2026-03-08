@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Krishna Soda Junction</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <h2>Krishna Soda Junction</h2>
+    <p>Loading Fresh Drinks... ⚡</p>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <h1>🥤 KRISHNA SODA JUNCTION</h1>
+    <p class="tagline">Feel The Fizz ⚡ | Ahmedabad, Gujarat</p>
+    <div class="divider"></div>
+
+    <!-- OFFER BANNERS -->
+    <div id="offer-banners"></div>
+
+    <div class="topbar">
+      <a href="admin.html" class="topbar-admin-link">🛠️ Admin</a>
+      <button onclick="window.print()">🖨️ Print</button>
+      <button id="cart-btn" onclick="toggleCart()">
+        🛒 Cart
+        <span id="cart-count">0</span>
+      </button>
+    </div>
+
+    <div class="search-wrap">
+      <input type="text" id="search-input" placeholder="Search drinks..." oninput="filterProducts()" />
+    </div>
+
+    <div class="categories" id="cat-bar">
+      <button class="cat-btn active" data-cat="All"              onclick="setCategory(this)">All</button>
+      <button class="cat-btn"        data-cat="Soda"             onclick="setCategory(this)">Soda</button>
+      <button class="cat-btn"        data-cat="Milk Shake"       onclick="setCategory(this)">Milk Shake</button>
+      <button class="cat-btn"        data-cat="Korean Ice Cream" onclick="setCategory(this)">Korean Ice Cream</button>
+      <button class="cat-btn"        data-cat="Smoothie"         onclick="setCategory(this)">Smoothie</button>
+      <button class="cat-btn"        data-cat="Mojito"           onclick="setCategory(this)">Mojito</button>
+      <button class="cat-btn"        data-cat="Coffee"           onclick="setCategory(this)">Coffee</button>
+      <button class="cat-btn"        data-cat="Latte"            onclick="setCategory(this)">Latte</button>
+      <button class="cat-btn"        data-cat="Slushy"           onclick="setCategory(this)">Slushy</button>
+      <button class="cat-btn"        data-cat="Faluda"           onclick="setCategory(this)">Faluda</button>
+      <button class="cat-btn"        data-cat="Juice"            onclick="setCategory(this)">Juice</button>
+    </div>
+  </header>
+
+  <section class="products" id="products-grid"></section>
+  <div id="no-results">😔 No drinks found. Try a different search!</div>
+
+  <!-- CART OVERLAY -->
+  <div id="cart-overlay" onclick="toggleCart()"></div>
+
+  <!-- CART PANEL -->
+  <div id="cart-panel">
+    <div class="cart-header">
+      <h2>🛒 Your Order</h2>
+      <button class="cart-close" onclick="toggleCart()">✕</button>
+    </div>
+    <div class="cart-items" id="cart-items-list">
+      <p class="cart-empty">Your cart is empty 🥤</p>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Total:</span>
+        <span id="cart-total">₹0</span>
+      </div>
+      <button class="btn-wa" onclick="openCheckout()">🧾 Place Order</button>
+      <button class="btn-clear" onclick="clearCart()">Clear Cart</button>
+    </div>
+  </div>
+
+  <!-- CHECKOUT OVERLAY -->
+  <div id="checkout-overlay" onclick="closeCheckout()"></div>
+
+  <!-- CHECKOUT MODAL -->
+  <div id="checkout-modal">
+    <div class="co-handle"></div>
+    <div class="co-header">
+      <h2>🧾 Place Your Order</h2>
+      <button onclick="closeCheckout()">✕</button>
+    </div>
+    <div class="co-body">
+      <div class="co-order-summary" id="co-summary"></div>
+      <div class="co-total-row">
+        <span>Total Amount</span>
+        <span id="co-total" class="co-total-val">₹0</span>
+      </div>
+      <div class="co-field">
+        <label>📱 Your WhatsApp Number</label>
+        <input type="tel" id="co-phone" placeholder="Enter 10-digit number" maxlength="10" inputmode="numeric" />
+      </div>
+      <div class="co-field">
+        <label>💳 Payment Type</label>
+        <div class="pay-options">
+          <label class="pay-opt">
+            <input type="radio" name="pay" value="Cash" checked onchange="onPayChange()" />
+            <span>💵 Cash</span>
+          </label>
+          <label class="pay-opt">
+            <input type="radio" name="pay" value="Online" onchange="onPayChange()" />
+            <span>📲 Online / UPI</span>
+          </label>
+        </div>
+      </div>
+      <!-- QR shown only for Online -->
+      <div id="qr-section" style="display:none">
+        <div class="qr-box">
+          <p class="qr-label">📸 Scan & Pay</p>
+          <img id="qr-img" src="" alt="UPI QR Code" class="qr-img"
+               onerror="this.src='https://placehold.co/200x200/111/f5c518?text=QR+Code'" />
+          <p class="qr-note" id="qr-upi-note"></p>
+        </div>
+      </div>
+    </div>
+    <div class="co-footer">
+      <button class="co-btn-place" onclick="placeOrder()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.099 1.508 5.814L.057 23.9c-.067.265.161.493.426.426l6.115-1.449A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-4.995-1.367l-.357-.212-3.704.877.893-3.63-.232-.373A9.818 9.818 0 0112 2.182c5.424 0 9.818 4.394 9.818 9.818 0 5.423-4.394 9.818-9.818 9.818z"/>
+        </svg>
+        Send Bill on WhatsApp
+      </button>
+      <button class="co-btn-cancel" onclick="closeCheckout()">Cancel</button>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

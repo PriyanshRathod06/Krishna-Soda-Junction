@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — Krishna Soda Junction</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --gold: #f5c518; --gold2: #e8a800;
+      --bg: #0a0a0a; --card: #111; --card2: #1a1a1a;
+      --border: #222; --text: #fff; --muted: #888;
+      --red: #e74c3c; --green: #2ecc71; --blue: #3498db;
+    }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .login-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 40px 36px; width: min(400px,92vw); text-align: center;
+    }
+    .login-box .lock { font-size: 48px; margin-bottom: 16px; }
+    .login-box h2 { font-family:'Playfair Display',serif; color:var(--gold); font-size:22px; margin-bottom:6px; }
+    .login-box p  { color:var(--muted); font-size:13px; margin-bottom:28px; }
+    .login-field {
+      width:100%; padding:12px 16px; border-radius:10px; border:1px solid var(--border);
+      background:#161616; color:var(--text); font-size:14px; font-family:'Poppins',sans-serif;
+      outline:none; margin-bottom:14px; transition:border-color 0.2s;
+    }
+    .login-field:focus { border-color:var(--gold); }
+    .btn-login {
+      width:100%; padding:13px; border-radius:10px; border:none;
+      background:var(--gold); color:#000; font-weight:700; font-size:15px;
+      font-family:'Poppins',sans-serif; cursor:pointer; transition:background 0.2s; margin-top:4px;
+    }
+    .btn-login:hover { background:var(--gold2); }
+    #login-error { color:var(--red); font-size:13px; margin-top:12px; display:none; }
+
+    /* ── ADMIN LAYOUT ── */
+    #admin-app { display:none; }
+
+    /* ── TABS ── */
+    .admin-header {
+      background:var(--card); border-bottom:1px solid var(--border);
+      padding:14px 20px; display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+    }
+    .admin-header h1 { font-family:'Playfair Display',serif; color:var(--gold); font-size:18px; }
+    .header-right { display:flex; gap:10px; align-items:center; }
+
+    .tab-bar {
+      display:flex; gap:4px; background:var(--card); border-bottom:1px solid var(--border);
+      padding:0 20px; overflow-x:auto; scrollbar-width:none;
+    }
+    .tab-bar::-webkit-scrollbar { display:none; }
+    .tab-btn {
+      padding:12px 18px; border:none; background:transparent; color:var(--muted);
+      font-size:13px; font-family:'Poppins',sans-serif; cursor:pointer;
+      border-bottom:3px solid transparent; white-space:nowrap; transition:0.2s;
+    }
+    .tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); font-weight:600; }
+    .tab-btn:hover:not(.active) { color:var(--text); }
+
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+
+    .admin-body { max-width:1200px; margin:0 auto; padding:24px 20px; }
+
+    /* ── BUTTONS ── */
+    .btn-sm {
+      padding:8px 16px; border-radius:20px; border:1px solid var(--border);
+      background:var(--card2); color:var(--text); font-size:13px;
+      font-family:'Poppins',sans-serif; cursor:pointer; transition:0.2s;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+    }
+    .btn-sm:hover { border-color:var(--gold); color:var(--gold); }
+    .btn-sm.danger:hover { border-color:var(--red); color:var(--red); }
+    .btn-sm.gold { background:var(--gold); color:#000; border-color:var(--gold); font-weight:600; }
+    .btn-sm.gold:hover { background:var(--gold2); }
+
+    /* ── STATS ── */
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:24px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
+    .stat-card .label { color:var(--muted); font-size:11px; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+    .stat-card .value { font-size:24px; font-weight:700; color:var(--gold); }
+    .stat-card .sub   { font-size:11px; color:var(--muted); margin-top:4px; }
+
+    /* ── SECTION TITLE ── */
+    .section-title { font-size:15px; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:10px; justify-content:space-between; }
+
+    /* ── FORM ── */
+    #add-form-wrap { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px; margin-bottom:24px; display:none; }
+    #add-form-wrap.open { display:block; }
+    #add-form-wrap h3 { font-size:15px; margin-bottom:18px; color:var(--gold); }
+    .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group label { font-size:12px; color:var(--muted); font-weight:500; }
+    .form-group input, .form-group select {
+      padding:10px 13px; border-radius:10px; border:1px solid var(--border);
+      background:#161616; color:var(--text); font-size:14px; font-family:'Poppins',sans-serif;
+      outline:none; transition:border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color:var(--gold); }
+    .form-group input::placeholder { color:var(--muted); }
+    .form-group select option { background:#1a1a1a; }
+
+    /* Image input toggle */
+    .img-toggle { display:flex; gap:8px; margin-bottom:8px; }
+    .img-toggle-btn {
+      padding:5px 12px; border-radius:20px; border:1px solid var(--border);
+      background:transparent; color:var(--muted); font-size:12px;
+      font-family:'Poppins',sans-serif; cursor:pointer; transition:0.2s;
+    }
+    .img-toggle-btn.active { background:var(--gold); color:#000; border-color:var(--gold); font-weight:600; }
+    .img-file-input { display:none; }
+    .img-preview { width:100%; height:110px; border-radius:8px; object-fit:cover; background:#1a1a1a; display:none; border:1px solid var(--border); margin-top:6px; }
+    .img-preview.show { display:block; }
+
+    .form-actions { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+    .btn-save {
+      padding:10px 22px; border-radius:20px; border:none; background:var(--gold);
+      color:#000; font-weight:700; font-size:14px; font-family:'Poppins',sans-serif;
+      cursor:pointer; transition:background 0.2s;
+    }
+    .btn-save:hover { background:var(--gold2); }
+    .btn-cancel {
+      padding:10px 22px; border-radius:20px; border:1px solid var(--border);
+      background:transparent; color:var(--muted); font-size:14px;
+      font-family:'Poppins',sans-serif; cursor:pointer; transition:0.2s;
+    }
+    .btn-cancel:hover { border-color:var(--red); color:var(--red); }
+
+    /* ── TABLE ── */
+    .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-bottom:24px; }
+    .table-search { padding:12px 14px; border-bottom:1px solid var(--border); }
+    .table-search input {
+      width:100%; padding:9px 15px; border-radius:20px; border:1px solid var(--border);
+      background:#161616; color:var(--text); font-size:13px; font-family:'Poppins',sans-serif;
+      outline:none; transition:border-color 0.2s;
+    }
+    .table-search input:focus { border-color:var(--gold); }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    thead { background:#161616; }
+    th { padding:11px 13px; text-align:left; color:var(--muted); font-weight:500; white-space:nowrap; }
+    td { padding:11px 13px; border-top:1px solid var(--border); vertical-align:middle; }
+    tr:hover td { background:#161616; }
+    .thumb { width:52px; height:42px; border-radius:8px; object-fit:cover; background:#222; }
+    .cat-badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:#1e1e1e; border:1px solid var(--border); color:var(--gold); white-space:nowrap; }
+    .tbl-actions { display:flex; gap:7px; }
+    .btn-edit, .btn-del { padding:5px 12px; border-radius:16px; border:none; font-size:12px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transition:0.2s; }
+    .btn-edit { background:#1e1e1e; border:1px solid var(--gold); color:var(--gold); }
+    .btn-edit:hover { background:var(--gold); color:#000; }
+    .btn-del  { background:#1e1e1e; border:1px solid var(--red);  color:var(--red); }
+    .btn-del:hover  { background:var(--red);  color:#fff; }
+    .table-scroll { overflow-x:auto; }
+
+    /* ── ORDERS TAB ── */
+    .order-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
+
+    .orders-filter { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+    .orders-filter select, .orders-filter input {
+      padding:8px 14px; border-radius:20px; border:1px solid var(--border);
+      background:#161616; color:var(--text); font-size:13px;
+      font-family:'Poppins',sans-serif; outline:none; transition:border-color 0.2s;
+    }
+    .orders-filter select:focus, .orders-filter input:focus { border-color:var(--gold); }
+
+    .order-card {
+      background:var(--card); border:1px solid var(--border); border-radius:14px;
+      padding:16px; margin-bottom:12px; transition:border-color 0.2s;
+    }
+    .order-card:hover { border-color:#333; }
+    .order-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+    .order-id   { font-weight:700; color:var(--gold); font-size:14px; }
+    .order-time { color:var(--muted); font-size:12px; margin-top:2px; }
+    .order-phone { font-size:13px; color:var(--text); }
+    .order-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+    .order-total { font-size:18px; font-weight:700; color:var(--gold); }
+    .pay-badge {
+      padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap;
+    }
+    .pay-badge.cash   { background:rgba(46,204,113,0.15); color:var(--green); border:1px solid rgba(46,204,113,0.3); }
+    .pay-badge.online { background:rgba(52,152,219,0.15); color:var(--blue);  border:1px solid rgba(52,152,219,0.3); }
+    .order-items { border-top:1px solid var(--border); padding-top:10px; display:flex; flex-direction:column; gap:4px; }
+    .order-item-row { display:flex; justify-content:space-between; font-size:13px; }
+    .order-item-row span:last-child { color:var(--gold); font-weight:600; }
+    .no-orders { text-align:center; color:var(--muted); padding:50px 20px; font-size:14px; }
+
+    /* ── SETTINGS BOX ── */
+    .settings-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px; margin-bottom:22px; }
+    .settings-box h3 { font-size:15px; color:var(--gold); margin-bottom:16px; }
+    .settings-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; }
+
+    /* QR Upload */
+    .qr-upload-area {
+      border: 2px dashed var(--border); border-radius: 14px;
+      padding: 24px; text-align: center; cursor: pointer; transition: border-color 0.2s;
+      background: #161616; position: relative; overflow: hidden;
+    }
+    .qr-upload-area:hover { border-color: var(--gold); }
+    .qr-upload-area input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .qr-upload-area .qr-icon { font-size: 36px; margin-bottom: 8px; }
+    .qr-upload-area p { color: var(--muted); font-size: 13px; }
+    .qr-preview-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+    .qr-preview-img { width: 100px; height: 100px; border-radius: 10px; object-fit: contain; background: #fff; padding: 6px; border: 1px solid var(--border); display: none; }
+    .qr-preview-img.show { display: block; }
+
+    /* ── TOAST ── */
+    #toast {
+      position:fixed; bottom:24px; right:24px; background:#1a1a1a;
+      border:1px solid var(--border); border-radius:12px; padding:13px 18px;
+      font-size:13px; z-index:99999; transform:translateY(80px); opacity:0;
+      transition:transform 0.3s ease, opacity 0.3s ease; pointer-events:none;
+      display:flex; align-items:center; gap:10px; max-width:300px;
+    }
+    #toast.show { transform:translateY(0); opacity:1; }
+    #toast.success { border-color:var(--green); }
+    #toast.error   { border-color:var(--red); }
+
+    /* ── CONFIRM MODAL ── */
+    #confirm-modal {
+      position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9000;
+      display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+    }
+    #confirm-modal.open { display:flex; }
+    .confirm-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px 30px; width:min(360px,90vw); text-align:center; }
+    .confirm-box h3 { font-size:17px; margin-bottom:10px; }
+    .confirm-box p  { color:var(--muted); font-size:13px; margin-bottom:22px; }
+    .confirm-btns { display:flex; gap:12px; justify-content:center; }
+    .btn-confirm-yes { padding:10px 24px; border-radius:20px; border:none; background:var(--red); color:#fff; font-weight:700; font-family:'Poppins',sans-serif; cursor:pointer; }
+    .btn-confirm-yes:hover { opacity:0.85; }
+    .btn-confirm-no  { padding:10px 24px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'Poppins',sans-serif; cursor:pointer; }
+    .btn-confirm-no:hover { border-color:var(--text); color:var(--text); }
+
+    @media (max-width:600px) {
+      .admin-body { padding:16px 12px; }
+      .admin-header h1 { font-size:16px; }
+    }
+
+    /* ── COMPARE GRID ── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .compare-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .compare-card .c-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .compare-card .c-day   { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .compare-card .c-val   { font-size: 24px; font-weight: 700; color: var(--gold); }
+    .compare-card .c-sub   { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .compare-card .c-diff  { font-size: 12px; font-weight: 600; margin-top: 6px; }
+    .c-diff.up   { color: #2ecc71; }
+    .c-diff.down { color: #e74c3c; }
+    .c-diff.same { color: var(--muted); }
+    .compare-card.today { border-color: rgba(245,197,24,0.4); background: rgba(245,197,24,0.04); }
+
+    /* ── CHART ── */
+    .chart-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 16px 12px;
+      margin-bottom: 20px;
+    }
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 120px;
+      margin-bottom: 8px;
+    }
+    .chart-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .chart-bar-val {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .chart-bar {
+      width: 100%;
+      background: linear-gradient(to top, var(--gold2), var(--gold));
+      border-radius: 6px 6px 0 0;
+      min-height: 4px;
+      transition: height 0.5s ease;
+      position: relative;
+      cursor: default;
+    }
+    .chart-bar.today-bar { background: linear-gradient(to top, #e8a800, #fff176); }
+    .chart-bar.zero { background: #222; }
+    .chart-labels {
+      display: flex;
+      gap: 8px;
+    }
+    .chart-label {
+      flex: 1;
+      text-align: center;
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chart-label.today-lbl { color: var(--gold); font-weight: 700; }
+
+    /* ── TOP PRODUCT HERO ── */
+    .hero-card {
+      background: linear-gradient(135deg, rgba(245,197,24,0.12), rgba(232,168,0,0.05));
+      border: 1px solid rgba(245,197,24,0.35);
+      border-radius: 16px;
+      padding: 20px 22px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .hero-badge { font-size: 40px; }
+    .hero-info  { flex: 1; min-width: 140px; }
+    .hero-name  { font-size: 20px; font-weight: 700; color: var(--gold); margin-bottom: 4px; }
+    .hero-cat   { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .hero-stats { display: flex; gap: 20px; flex-wrap: wrap; }
+    .hero-stat  { display: flex; flex-direction: column; gap: 2px; }
+    .hero-stat .hs-label { font-size: 11px; color: var(--muted); }
+    .hero-stat .hs-val   { font-size: 18px; font-weight: 700; color: var(--text); }
+    .hero-empty { text-align: center; color: var(--muted); padding: 30px; font-size: 14px; }
+
+    /* mini bar in table */
+    .mini-bar-wrap { width: 80px; background: #222; border-radius: 4px; height: 8px; overflow: hidden; }
+    .mini-bar      { height: 100%; background: var(--gold); border-radius: 4px; }
+
+    /* ── OFFER FORM ── */
+    #offer-form-wrap {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px; margin-bottom: 22px; display: none;
+    }
+    #offer-form-wrap.open { display: block; }
+    #offer-form-wrap h3   { font-size: 15px; margin-bottom: 16px; color: var(--gold); }
+
+    /* ── OFFER CARDS ── */
+    .offer-card {
+      border-radius: 16px; padding: 18px 20px; margin-bottom: 14px;
+      display: flex; align-items: flex-start; gap: 14px;
+      position: relative; border: 1px solid transparent;
+    }
+    .offer-card.gold   { background: linear-gradient(135deg,rgba(245,197,24,0.12),rgba(232,168,0,0.04)); border-color: rgba(245,197,24,0.35); }
+    .offer-card.green  { background: linear-gradient(135deg,rgba(46,204,113,0.12),rgba(39,174,96,0.04));  border-color: rgba(46,204,113,0.35); }
+    .offer-card.red    { background: linear-gradient(135deg,rgba(231,76,60,0.12),rgba(192,57,43,0.04));   border-color: rgba(231,76,60,0.35); }
+    .offer-card.blue   { background: linear-gradient(135deg,rgba(52,152,219,0.12),rgba(41,128,185,0.04)); border-color: rgba(52,152,219,0.35); }
+    .offer-card.purple { background: linear-gradient(135deg,rgba(155,89,182,0.12),rgba(142,68,173,0.04)); border-color: rgba(155,89,182,0.35); }
+    .offer-card.inactive-card { opacity: 0.45; }
+
+    .offer-emoji  { font-size: 32px; flex-shrink: 0; margin-top: 2px; }
+    .offer-body   { flex: 1; }
+    .offer-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+    .offer-title  { font-size: 16px; font-weight: 700; }
+    .offer-tag    { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: var(--gold); color: #000; white-space: nowrap; }
+    .offer-desc   { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .offer-valid  { font-size: 11px; color: var(--muted); }
+    .offer-status-badge { padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .offer-status-badge.active   { background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); }
+    .offer-status-badge.inactive { background: rgba(136,136,136,0.1); color: var(--muted); border: 1px solid #333; }
+    .offer-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .offer-no { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 14px; }
+
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="lock">🔐</div>
+    <h2>Admin Panel</h2>
+    <p>Krishna Soda Junction — Restricted Access</p>
+    <input class="login-field" type="text"     id="uname" placeholder="Username" />
+    <input class="login-field" type="password" id="upass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()" />
+    <button class="btn-login" onclick="doLogin()">Login →</button>
+    <div id="login-error">❌ Wrong username or password!</div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-app">
+  <div class="admin-header">
+    <div><h1>🛠️ Admin Panel <span style="color:var(--muted);font-size:13px;font-family:'Poppins',sans-serif">— Krishna Soda Junction</span></h1></div>
+    <div class="header-right">
+      <a href="index.html" class="btn-sm" target="_blank">🌐 View Menu</a>
+      <button class="btn-sm danger" onclick="doLogout()">🚪 Logout</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn"        onclick="switchTab('products')">📦 Products</button>
+    <button class="tab-btn"        onclick="switchTab('offers')">🎁 Offers</button>
+    <button class="tab-btn"        onclick="switchTab('orders')">🧾 Orders</button>
+    <button class="tab-btn"        onclick="switchTab('settings')">⚙️ Settings</button>
+  </div>
+
+  <!-- ══ DASHBOARD TAB ══ -->
+  <div class="tab-pane active" id="tab-dashboard">
+    <div class="admin-body">
+      <div class="section-title"><span>📊 Overall Summary</span></div>
+      <div class="stats-row" id="stats-row"></div>
+      <div class="section-title" style="margin-top:4px"><span>📅 Aaj vs Kal</span></div>
+      <div class="compare-grid" id="compare-grid"></div>
+      <div class="section-title" style="margin-top:4px"><span>📈 Last 7 Days Sales</span></div>
+      <div class="chart-box">
+        <div class="chart-bars" id="chart-bars"></div>
+        <div class="chart-labels" id="chart-labels"></div>
+      </div>
+      <div class="section-title" style="margin-top:4px"><span>🏆 Sabse Zyada Bikne Wala Product</span></div>
+      <div id="top-product-hero"></div>
+      <div class="section-title" style="margin-top:4px"><span>📋 Top 10 Products</span></div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Rank</th><th>Product</th><th>Orders</th><th>Qty Sold</th><th>Revenue</th><th>Bar</th></tr></thead>
+            <tbody id="top-items-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PRODUCTS TAB ══ -->
+  <div class="tab-pane" id="tab-products">
+    <div class="admin-body">
+      <div class="section-title">
+        <span>📦 Menu Products</span>
+        <button class="btn-sm gold" onclick="openAddForm()">＋ Add New Product</button>
+      </div>
+
+      <div id="add-form-wrap">
+        <h3 id="form-title">➕ Add New Product</h3>
+        <input type="hidden" id="edit-id" value="" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Auto ID</label>
+            <input type="text" id="f-id" disabled style="opacity:0.5" />
+          </div>
+          <div class="form-group">
+            <label>Product Name *</label>
+            <input type="text" id="f-name" placeholder="e.g. Mango Soda" />
+          </div>
+          <div class="form-group">
+            <label>Description *</label>
+            <input type="text" id="f-desc" placeholder="e.g. Chilled mango drink" />
+          </div>
+          <div class="form-group">
+            <label>Price (₹) *</label>
+            <input type="number" id="f-price" placeholder="e.g. 50" min="1" />
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="f-cat">
+              <option value="">-- Select Category --</option>
+              <option>Soda</option><option>Milk Shake</option>
+              <option>Korean Ice Cream</option><option>Smoothie</option>
+              <option>Mojito</option><option>Coffee</option>
+              <option>Latte</option><option>Slushy</option>
+              <option>Faluda</option><option>Juice</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Product Image *</label>
+            <div class="img-toggle">
+              <button class="img-toggle-btn active" id="toggle-url" onclick="setImgMode('url')">🔗 URL</button>
+              <button class="img-toggle-btn"        id="toggle-file" onclick="setImgMode('file')">📁 Upload</button>
+            </div>
+            <input type="url" id="f-img-url" placeholder="https://..." oninput="previewImgUrl()" />
+            <input type="file" id="f-img-file" class="img-file-input" accept="image/*" onchange="previewImgFile()" />
+            <img id="img-preview" class="img-preview" src="" alt="Preview" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="saveProduct()">💾 Save Product</button>
+          <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-search">
+          <input type="text" id="tbl-search" placeholder="🔍 Search products..." oninput="renderTable()" />
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ORDERS TAB ══ -->
+  <div class="tab-pane" id="tab-orders">
+    <div class="admin-body">
+      <div class="stats-row" id="order-stats-row2"></div>
+
+      <div class="section-title">
+        <span>🧾 All Orders</span>
+        <button class="btn-sm danger" onclick="clearAllOrders()">🗑️ Clear All</button>
+      </div>
+
+      <div class="orders-filter">
+        <select id="filter-payment" onchange="renderOrders()">
+          <option value="All">All Payments</option>
+          <option value="Cash">💵 Cash</option>
+          <option value="Online">📲 Online</option>
+        </select>
+        <input type="text" id="filter-search" placeholder="Search by ID or phone..." oninput="renderOrders()" style="flex:1;min-width:160px" />
+      </div>
+
+      <div id="orders-list"></div>
+    </div>
+  </div>
+
+
+  <!-- ══ OFFERS TAB ══ -->
+  <div class="tab-pane" id="tab-offers">
+    <div class="admin-body">
+
+      <div class="section-title">
+        <span>🎁 Special Offers</span>
+        <button class="btn-sm gold" onclick="openOfferForm()">＋ Add New Offer</button>
+      </div>
+
+      <!-- Add/Edit Offer Form -->
+      <div id="offer-form-wrap">
+        <h3 id="offer-form-title">➕ New Special Offer</h3>
+        <input type="hidden" id="offer-edit-id" value="" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Offer Title *</label>
+            <input type="text" id="of-title" placeholder="e.g. Summer Special 🌞" />
+          </div>
+          <div class="form-group">
+            <label>Description *</label>
+            <input type="text" id="of-desc" placeholder="e.g. Buy 2 get 1 free on all Sodas!" />
+          </div>
+          <div class="form-group">
+            <label>Discount / Tag</label>
+            <input type="text" id="of-tag" placeholder="e.g. 20% OFF  or  Buy 2 Get 1" />
+          </div>
+          <div class="form-group">
+            <label>Valid Until (optional)</label>
+            <input type="date" id="of-date" />
+          </div>
+          <div class="form-group">
+            <label>Banner Color</label>
+            <select id="of-color">
+              <option value="gold">⭐ Gold (Default)</option>
+              <option value="green">🟢 Green</option>
+              <option value="red">🔴 Red / Hot Deal</option>
+              <option value="blue">🔵 Blue</option>
+              <option value="purple">💜 Purple</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="of-status">
+              <option value="active">✅ Active (Show to customers)</option>
+              <option value="inactive">⏸️ Inactive (Hide)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="saveOffer()">💾 Save Offer</button>
+          <button class="btn-cancel" onclick="closeOfferForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Offers List -->
+      <div id="offers-list-wrap"></div>
+
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS TAB ══ -->
+  <div class="tab-pane" id="tab-settings">
+    <div class="admin-body">
+
+      <!-- Shop / WhatsApp Settings -->
+      <div class="section-title"><span>🏪 Shop Settings</span></div>
+      <div class="settings-box">
+        <h3>📱 WhatsApp Number</h3>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>Shop WhatsApp (with country code, no +)</label>
+            <input type="text" id="s-wa" placeholder="e.g. 918320847041" />
+          </div>
+          <div class="form-group">
+            <label>UPI ID (for Online payments)</label>
+            <input type="text" id="s-upi" placeholder="e.g. name@upi" />
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:14px">
+          <button class="btn-save" onclick="saveShopSettings()">💾 Save Settings</button>
+        </div>
+      </div>
+
+      <!-- QR Code Upload -->
+      <div class="section-title"><span>📲 UPI / Payment QR Code</span></div>
+      <div class="settings-box">
+        <h3>Upload Your Payment QR Code</h3>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:16px">This QR will be shown to customers who choose Online payment. You can upload from your phone or paste a URL.</p>
+
+        <div class="img-toggle" style="margin-bottom:12px">
+          <button class="img-toggle-btn active" id="qr-toggle-file" onclick="setQRMode('file')">📁 Upload from Phone</button>
+          <button class="img-toggle-btn"        id="qr-toggle-url"  onclick="setQRMode('url')">🔗 Paste URL</button>
+        </div>
+
+        <div id="qr-file-wrap">
+          <div class="qr-upload-area" id="qr-drop-area">
+            <input type="file" accept="image/*" id="qr-file-input" onchange="onQRFileChange()" />
+            <div class="qr-icon">📲</div>
+            <p>Tap to upload QR from Gallery / Camera</p>
+            <p style="font-size:11px;margin-top:4px">JPG, PNG supported</p>
+          </div>
+        </div>
+
+        <div id="qr-url-wrap" style="display:none">
+          <div class="form-group">
+            <label>QR Code Image URL</label>
+            <input type="url" id="qr-url-input" placeholder="https://..." oninput="previewQRUrl()" />
+          </div>
+        </div>
+
+        <div class="qr-preview-row">
+          <img id="qr-preview-img" class="qr-preview-img" src="" alt="QR Preview" onerror="this.classList.remove('show')" />
+          <div id="qr-preview-info" style="font-size:13px;color:var(--muted);display:none">
+            ✅ QR Code loaded! It will be shown to customers on Online payment.
+          </div>
+        </div>
+
+        <div class="form-actions" style="margin-top:16px">
+          <button class="btn-save" onclick="saveQR()">💾 Save QR Code</button>
+          <button class="btn-cancel" onclick="removeQR()">🗑️ Remove QR</button>
+        </div>
+      </div>
+
+      <!-- Change Credentials -->
+      <div class="section-title"><span>🔑 Change Credentials</span></div>
+      <div class="settings-box">
+        <h3>Update Admin Login</h3>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>New Username</label>
+            <input type="text" id="s-user" placeholder="New username" />
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="s-pass" placeholder="New password" />
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" id="s-pass2" placeholder="Confirm password" />
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:14px">
+          <button class="btn-save" onclick="saveCredentials()">🔒 Update Credentials</button>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div class="section-title"><span>📤 Export Data</span></div>
+      <div class="settings-box">
+        <h3>Download / Export</h3>
+        <div class="form-actions">
+          <button class="btn-save" onclick="exportJSON()">⬇️ Download menu.json</button>
+          <button class="btn-sm gold" onclick="exportOrders()">⬇️ Download orders.json</button>
+          <button class="btn-sm gold" onclick="copyScriptCode()">📋 Copy script.js menu</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <h3 id="confirm-title">Confirm?</h3>
+    <p id="confirm-msg">This cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-yes" id="confirm-yes-btn">Yes, Delete</button>
+      <button class="btn-confirm-no"  onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════
+   ADMIN PANEL — API version (Railway + PostgreSQL)
+   ══════════════════════════════════════════════════════════════ */
+
+async function apiFetch(path, options = {}) {
+  try {
+    const res = await fetch(API + path, {
+      headers: { "Content-Type": "application/json" },
+      ...options,
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>{}); throw new Error(e?.detail || res.status); }
+    return await res.json();
+  } catch (e) {
+    console.error("API error:", path, e);
+    toast("❌ API Error: " + e.message, "error");
+    return null;
+  }
+}
+
+// ── AUTH (via API) ─────────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById("uname").value.trim();
+  const p = document.getElementById("upass").value.trim();
+  const res = await apiFetch("/api/settings/login", {
+    method: "POST",
+    body: JSON.stringify({ username: u, password: p }),
+  });
+  if (res?.ok) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("admin-app").style.display    = "block";
+    sessionStorage.setItem("ksj_auth", "1");
+    sessionStorage.setItem("ksj_user", u);
+    sessionStorage.setItem("ksj_pass", p);
+    initAdmin();
+  } else {
+    document.getElementById("login-error").style.display = "block";
+    document.getElementById("upass").value = "";
+  }
+}
+
+function doLogout() { sessionStorage.clear(); location.reload(); }
+
+window.addEventListener("DOMContentLoaded", () => {
+  if (sessionStorage.getItem("ksj_auth") === "1") {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("admin-app").style.display    = "block";
+    initAdmin();
+  }
+  document.getElementById("upass").addEventListener("keydown", e => { if(e.key==="Enter") doLogin(); });
+});
+
+// ── TABS ───────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-"+name).classList.add("active");
+  event.target.classList.add("active");
+  if (name==="dashboard") renderDashboard();
+  if (name==="products")  renderTable();
+  if (name==="offers")    renderOffersAdmin();
+  if (name==="orders")    { renderOrderStats(); renderOrders(); }
+  if (name==="settings")  loadSettings();
+}
+
+function initAdmin() { renderDashboard(); }
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════
+async function renderDashboard() {
+  const [menuData, analytics] = await Promise.all([
+    apiFetch("/api/menu/all"),
+    apiFetch("/api/orders/analytics"),
+  ]);
+  if (!analytics) return;
+
+  const m    = menuData || [];
+  const a    = analytics;
+  const cash = a.by_payment?.Cash    || { count:0, revenue:0 };
+  const onl  = a.by_payment?.Online  || { count:0, revenue:0 };
+  const avg  = a.total.orders ? Math.round(a.total.revenue / a.total.orders) : 0;
+
+  document.getElementById("stats-row").innerHTML = `
+    <div class="stat-card"><div class="label">Total Products</div><div class="value">${m.length}</div><div class="sub">${[...new Set(m.map(x=>x.category))].length} categories</div></div>
+    <div class="stat-card"><div class="label">Total Orders</div><div class="value">${a.total.orders}</div><div class="sub">All time</div></div>
+    <div class="stat-card"><div class="label">Total Revenue</div><div class="value">₹${a.total.revenue}</div><div class="sub">All orders</div></div>
+    <div class="stat-card"><div class="label">Cash Orders</div><div class="value">${cash.count}</div><div class="sub">₹${cash.revenue}</div></div>
+    <div class="stat-card"><div class="label">Online Orders</div><div class="value">${onl.count}</div><div class="sub">₹${onl.revenue}</div></div>
+    <div class="stat-card"><div class="label">Avg Order</div><div class="value">₹${avg}</div><div class="sub">Per order</div></div>
+  `;
+
+  // Today vs Yesterday
+  const t = a.today; const y = a.yesterday;
+  const revDiff = t.revenue - y.revenue;
+  const ordDiff = t.orders  - y.orders;
+  function diffTag(diff, unit) {
+    if (diff > 0)  return `<div class="c-diff up">▲ ${unit}${diff} more than yesterday</div>`;
+    if (diff < 0)  return `<div class="c-diff down">▼ ${unit}${Math.abs(diff)} less than yesterday</div>`;
+    return `<div class="c-diff same">Same as yesterday</div>`;
+  }
+  const todayLabel = new Date().toLocaleDateString("en-IN");
+  const yestLabel  = new Date(Date.now()-86400000).toLocaleDateString("en-IN");
+
+  document.getElementById("compare-grid").innerHTML = `
+    <div class="compare-card today">
+      <div class="c-label">Revenue</div><div class="c-day">📅 Today (${todayLabel})</div>
+      <div class="c-val">₹${t.revenue}</div><div class="c-sub">${t.orders} orders</div>${diffTag(revDiff,"₹")}
+    </div>
+    <div class="compare-card">
+      <div class="c-label">Revenue</div><div class="c-day">📅 Yesterday (${yestLabel})</div>
+      <div class="c-val">₹${y.revenue}</div><div class="c-sub">${y.orders} orders</div>
+    </div>
+    <div class="compare-card today">
+      <div class="c-label">Orders</div><div class="c-day">📅 Today</div>
+      <div class="c-val">${t.orders}</div><div class="c-sub">orders placed</div>${diffTag(ordDiff,"")}
+    </div>
+    <div class="compare-card">
+      <div class="c-label">Orders</div><div class="c-day">📅 Yesterday</div>
+      <div class="c-val">${y.orders}</div><div class="c-sub">orders placed</div>
+    </div>
+  `;
+
+  // Last 7 days bar chart
+  const days7 = a.last_7_days || [];
+  // Fill in missing days
+  const filledDays = [];
+  for (let i = 6; i >= 0; i--) {
+    const d   = new Date(Date.now() - i*86400000);
+    const ds  = d.toISOString().slice(0,10);
+    const found = days7.find(x => x.day === ds);
+    filledDays.push({
+      label: i===0 ? "Aaj" : i===1 ? "Kal" : d.toLocaleDateString("en-IN",{weekday:"short"}),
+      rev:   found?.revenue || 0,
+      isToday: i===0,
+    });
+  }
+  const maxRev = Math.max(...filledDays.map(d=>d.rev), 1);
+  document.getElementById("chart-bars").innerHTML = filledDays.map(d => {
+    const h   = Math.max(Math.round((d.rev/maxRev)*100), d.rev>0?4:2);
+    const cls = d.isToday ? "chart-bar today-bar" : (d.rev===0 ? "chart-bar zero" : "chart-bar");
+    return `<div class="chart-bar-wrap">
+      <div class="chart-bar-val">${d.rev>0?"₹"+d.rev:""}</div>
+      <div class="${cls}" style="height:${h}%" title="${d.label}: ₹${d.rev}"></div>
+    </div>`;
+  }).join("");
+  document.getElementById("chart-labels").innerHTML = filledDays.map(d =>
+    `<div class="chart-label ${d.isToday?"today-lbl":""}">${d.label}</div>`
+  ).join("");
+
+  // Top product hero
+  const top10 = a.top_products || [];
+  const heroEl = document.getElementById("top-product-hero");
+  if (top10.length === 0) {
+    heroEl.innerHTML = `<div class="hero-empty">📋 No orders yet!</div>`;
+  } else {
+    const top = top10[0];
+    heroEl.innerHTML = `<div class="hero-card">
+      <div class="hero-badge">🏆</div>
+      <div class="hero-info">
+        <div class="hero-name">${top.name}</div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="hs-label">Qty Sold</div><div class="hs-val">${top.qty}</div></div>
+          <div class="hero-stat"><div class="hs-label">Total Orders</div><div class="hs-val">${top.orders}</div></div>
+          <div class="hero-stat"><div class="hs-label">Revenue</div><div class="hs-val" style="color:var(--gold)">₹${top.revenue}</div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Top 10 table
+  const maxQty = top10.length ? top10[0].qty : 1;
+  const medals = ["🥇","🥈","🥉"];
+  const tbody  = document.getElementById("top-items-body");
+  tbody.innerHTML = top10.length === 0
+    ? `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">No orders yet 📋</td></tr>`
+    : top10.map((item,i) => `<tr>
+        <td>${medals[i]||"#"+(i+1)}</td>
+        <td style="font-weight:600">${item.name}</td>
+        <td>${item.orders}</td>
+        <td style="color:var(--gold);font-weight:700">${item.qty}</td>
+        <td style="color:#2ecc71;font-weight:600">₹${item.revenue}</td>
+        <td><div class="mini-bar-wrap"><div class="mini-bar" style="width:${Math.round(item.qty/maxQty*100)}%"></div></div></td>
+      </tr>`).join("");
+}
+
+// ══════════════════════════════════════════════════════════════
+// PRODUCTS
+// ══════════════════════════════════════════════════════════════
+async function renderTable() {
+  const m   = await apiFetch("/api/menu/all");
+  const q   = document.getElementById("tbl-search")?.value.toLowerCase() || "";
+  const arr = (m||[]).filter(item =>
+    item.name.toLowerCase().includes(q) || item.category.toLowerCase().includes(q) || String(item.price).includes(q)
+  );
+  const tbody = document.getElementById("tbl-body");
+  if (arr.length === 0) { tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">No products found</td></tr>`; return; }
+  tbody.innerHTML = arr.map(item => `<tr>
+    <td style="color:var(--muted);font-weight:600">#${item.id}</td>
+    <td><img class="thumb" src="${item.image_url}" onerror="this.src='https://placehold.co/52x42/111/f5c518?text=🥤'" /></td>
+    <td style="font-weight:600">${item.name}<br><span style="color:var(--muted);font-size:12px">${item.description}</span></td>
+    <td><span class="cat-badge">${item.category}</span></td>
+    <td style="color:var(--gold);font-weight:700">₹${item.price}</td>
+    <td><div class="tbl-actions">
+      <button class="btn-edit" onclick="openEditForm(${item.id})">✏️ Edit</button>
+      <button class="btn-del"  onclick="askDelete(${item.id},'${item.name.replace(/'/g,"\'")}')">🗑️ Del</button>
+    </div></td>
+  </tr>`).join("");
+}
+
+// Image upload
+let imgMode = "url";
+let uploadedImgData = "";
+
+function setImgMode(mode) {
+  imgMode = mode;
+  document.getElementById("toggle-url").classList.toggle("active",  mode==="url");
+  document.getElementById("toggle-file").classList.toggle("active", mode==="file");
+  document.getElementById("f-img-url").style.display  = mode==="url"  ? "block" : "none";
+  const fi = document.getElementById("f-img-file");
+  fi.style.display = mode==="file" ? "block" : "none";
+  if (mode==="file") fi.click();
+}
+function previewImgUrl() {
+  const url = document.getElementById("f-img-url").value.trim();
+  const p   = document.getElementById("img-preview");
+  if (url) { p.src=url; p.classList.add("show"); } else p.classList.remove("show");
+}
+function previewImgFile() {
+  const file = document.getElementById("f-img-file").files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedImgData = e.target.result;
+    const p = document.getElementById("img-preview");
+    p.src = uploadedImgData; p.classList.add("show");
+  };
+  reader.readAsDataURL(file);
+}
+function getImgValue() {
+  return imgMode==="file" ? (uploadedImgData||"") : document.getElementById("f-img-url").value.trim();
+}
+
+async function openAddForm() {
+  document.getElementById("form-title").textContent = "➕ Add New Product";
+  document.getElementById("edit-id").value = "";
+  ["f-name","f-desc","f-price","f-img-url"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("f-cat").value = "";
+  uploadedImgData = ""; setImgMode("url");
+  document.getElementById("img-preview").classList.remove("show");
+  const wrap = document.getElementById("add-form-wrap");
+  wrap.classList.add("open"); wrap.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+async function openEditForm(id) {
+  const m    = await apiFetch("/api/menu/all");
+  const item = (m||[]).find(x=>x.id===id);
+  if (!item) return;
+  document.getElementById("form-title").textContent = "✏️ Edit Product";
+  document.getElementById("edit-id").value   = id;
+  document.getElementById("f-name").value    = item.name;
+  document.getElementById("f-desc").value    = item.description;
+  document.getElementById("f-price").value   = item.price;
+  document.getElementById("f-cat").value     = item.category;
+  document.getElementById("f-img-url").value = item.image_url;
+  uploadedImgData = ""; setImgMode("url");
+  const p = document.getElementById("img-preview"); p.src=item.image_url; p.classList.add("show");
+  const wrap = document.getElementById("add-form-wrap");
+  wrap.classList.add("open"); wrap.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function closeForm() { document.getElementById("add-form-wrap").classList.remove("open"); }
+
+async function saveProduct() {
+  const name   = document.getElementById("f-name").value.trim();
+  const desc   = document.getElementById("f-desc").value.trim();
+  const price  = parseInt(document.getElementById("f-price").value);
+  const cat    = document.getElementById("f-cat").value;
+  const img    = getImgValue();
+  const editId = document.getElementById("edit-id").value;
+  if (!name||!desc||!price||!cat||!img) { toast("❌ Sab fields bhar do!","error"); return; }
+
+  const body = { name, description: desc, price, category: cat, image_url: img, active: true };
+  if (editId) {
+    const r = await apiFetch(`/api/menu/${editId}`, { method:"PUT", body:JSON.stringify(body) });
+    if (r) toast(`✅ "${name}" updated!`,"success");
+  } else {
+    const r = await apiFetch("/api/menu/", { method:"POST", body:JSON.stringify(body) });
+    if (r) toast(`✅ "${name}" added!`,"success");
+  }
+  closeForm(); renderTable();
+}
+
+let _deleteId = null;
+function askDelete(id, name) {
+  _deleteId = id;
+  showConfirm(`🗑️ Delete Product?`, `Delete "${name}"? Cannot undo.`, async () => {
+    const r = await apiFetch(`/api/menu/${_deleteId}`, { method:"DELETE" });
+    if (r) { renderTable(); toast("🗑️ Deleted!","success"); }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// ORDERS
+// ══════════════════════════════════════════════════════════════
+async function renderOrderStats() {
+  const a = await apiFetch("/api/orders/analytics");
+  if (!a) return;
+  const cash = a.by_payment?.Cash   || {count:0,revenue:0};
+  const onl  = a.by_payment?.Online || {count:0,revenue:0};
+  const html = `
+    <div class="stat-card"><div class="label">Total Orders</div><div class="value">${a.total.orders}</div></div>
+    <div class="stat-card"><div class="label">Total Revenue</div><div class="value">₹${a.total.revenue}</div></div>
+    <div class="stat-card"><div class="label">Cash</div><div class="value">${cash.count}</div><div class="sub">₹${cash.revenue}</div></div>
+    <div class="stat-card"><div class="label">Online</div><div class="value">${onl.count}</div><div class="sub">₹${onl.revenue}</div></div>
+  `;
+  const el = document.getElementById("order-stats-row2");
+  if (el) el.innerHTML = html;
+}
+
+async function renderOrders() {
+  const orders  = await apiFetch("/api/orders/");
+  const pay     = document.getElementById("filter-payment").value;
+  const search  = document.getElementById("filter-search").value.toLowerCase();
+  if (!orders) return;
+
+  const filtered = orders.filter(o => {
+    const matchPay    = pay==="All" || o.payment_type===pay;
+    const matchSearch = o.id.toLowerCase().includes(search) || (o.customer_phone||"").includes(search);
+    return matchPay && matchSearch;
+  });
+
+  const list = document.getElementById("orders-list");
+  if (filtered.length===0) { list.innerHTML=`<div class="no-orders">📋 No orders found.</div>`; return; }
+  list.innerHTML = filtered.map(o => `
+    <div class="order-card">
+      <div class="order-top">
+        <div>
+          <div class="order-id">${o.id}</div>
+          <div class="order-time">📅 ${o.created_at}</div>
+          <div class="order-phone">📱 +${o.customer_phone}</div>
+        </div>
+        <div class="order-right">
+          <div class="order-total">₹${o.total}</div>
+          <span class="pay-badge ${o.payment_type.toLowerCase()}">${o.payment_type==="Cash"?"💵 Cash":"📲 Online"}</span>
+        </div>
+      </div>
+      <div class="order-items">
+        ${(o.items||[]).map(i=>`<div class="order-item-row"><span>${i.name} × ${i.qty}</span><span>₹${i.sub}</span></div>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+function clearAllOrders() {
+  showConfirm("🗑️ Clear All Orders?", "Permanently delete all order history?", async () => {
+    await apiFetch("/api/orders/all", { method:"DELETE" });
+    renderOrderStats(); renderOrders(); toast("🗑️ All orders cleared!","success");
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// OFFERS
+// ══════════════════════════════════════════════════════════════
+const OFFER_EMOJIS = { gold:"🎁", green:"🌿", red:"🔥", blue:"💙", purple:"💜" };
+
+function openOfferForm() {
+  document.getElementById("offer-form-title").textContent = "➕ New Offer";
+  document.getElementById("offer-edit-id").value = "";
+  ["of-title","of-desc","of-tag","of-date"].forEach(id => document.getElementById(id).value="");
+  document.getElementById("of-color").value  = "gold";
+  document.getElementById("of-status").value = "active";
+  const w = document.getElementById("offer-form-wrap");
+  w.classList.add("open"); w.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+async function openOfferEditForm(id) {
+  const offers = await apiFetch("/api/offers/all");
+  const o = (offers||[]).find(x=>x.id===id);
+  if (!o) return;
+  document.getElementById("offer-form-title").textContent = "✏️ Edit Offer";
+  document.getElementById("offer-edit-id").value = id;
+  document.getElementById("of-title").value  = o.title;
+  document.getElementById("of-desc").value   = o.description;
+  document.getElementById("of-tag").value    = o.tag||"";
+  document.getElementById("of-date").value   = o.valid_until||"";
+  document.getElementById("of-color").value  = o.color||"gold";
+  document.getElementById("of-status").value = o.status||"active";
+  const w = document.getElementById("offer-form-wrap");
+  w.classList.add("open"); w.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function closeOfferForm() { document.getElementById("offer-form-wrap").classList.remove("open"); }
+
+async function saveOffer() {
+  const title  = document.getElementById("of-title").value.trim();
+  const desc   = document.getElementById("of-desc").value.trim();
+  if (!title||!desc) { toast("❌ Title aur Description zaroori hai!","error"); return; }
+  const body = {
+    title, description: desc,
+    tag:         document.getElementById("of-tag").value.trim(),
+    valid_until: document.getElementById("of-date").value || null,
+    color:       document.getElementById("of-color").value,
+    status:      document.getElementById("of-status").value,
+  };
+  const editId = document.getElementById("offer-edit-id").value;
+  if (editId) {
+    const r = await apiFetch(`/api/offers/${editId}`, { method:"PUT", body:JSON.stringify(body) });
+    if (r) toast("✅ Offer updated!","success");
+  } else {
+    const r = await apiFetch("/api/offers/", { method:"POST", body:JSON.stringify(body) });
+    if (r) toast("✅ Offer added!","success");
+  }
+  closeOfferForm(); renderOffersAdmin();
+}
+
+async function toggleOfferStatus(id) {
+  const r = await apiFetch(`/api/offers/${id}/toggle`, { method:"PATCH" });
+  if (r) { renderOffersAdmin(); toast(r.status==="active"?"✅ Active!":"⏸️ Hidden!","success"); }
+}
+
+function deleteOffer(id) {
+  showConfirm("🗑️ Delete Offer?","Cannot undo.", async () => {
+    await apiFetch(`/api/offers/${id}`, { method:"DELETE" });
+    renderOffersAdmin(); toast("🗑️ Deleted!","success");
+  });
+}
+
+async function renderOffersAdmin() {
+  const offers = await apiFetch("/api/offers/all");
+  const wrap   = document.getElementById("offers-list-wrap");
+  if (!wrap) return;
+  if (!offers || offers.length===0) {
+    wrap.innerHTML=`<div class="offer-no">🎁 No offers yet. Click "Add New Offer"!</div>`; return;
+  }
+  wrap.innerHTML = offers.map(o => {
+    const emoji      = OFFER_EMOJIS[o.color]||"🎁";
+    const inactiveCls = o.status==="inactive" ? " inactive-card" : "";
+    const validTxt    = o.valid_until ? `📅 Valid till: ${new Date(o.valid_until).toLocaleDateString("en-IN")}` : "";
+    const toggleLbl   = o.status==="active" ? "⏸️ Hide" : "✅ Show";
+    return `<div class="offer-card ${o.color}${inactiveCls}">
+      <div class="offer-emoji">${emoji}</div>
+      <div class="offer-body">
+        <div class="offer-title-row">
+          <span class="offer-title">${o.title}</span>
+          ${o.tag?`<span class="offer-tag">${o.tag}</span>`:""}
+          <span class="offer-status-badge ${o.status}">${o.status==="active"?"✅ Active":"⏸️ Hidden"}</span>
+        </div>
+        <div class="offer-desc">${o.description}</div>
+        ${validTxt?`<div class="offer-valid">${validTxt}</div>`:""}
+        <div class="offer-actions">
+          <button class="btn-edit" onclick="openOfferEditForm(${o.id})">✏️ Edit</button>
+          <button class="btn-edit" onclick="toggleOfferStatus(${o.id})">${toggleLbl}</button>
+          <button class="btn-del"  onclick="deleteOffer(${o.id})">🗑️ Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ══════════════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════════════
+async function loadSettings() {
+  const s = await apiFetch("/api/settings/");
+  if (!s) return;
+  document.getElementById("s-wa").value  = s.wa_number || "";
+  document.getElementById("s-upi").value = s.upi_id    || "";
+  if (s.qr_img) {
+    document.getElementById("qr-preview-img").src = s.qr_img;
+    document.getElementById("qr-preview-img").classList.add("show");
+    document.getElementById("qr-preview-info").style.display = "block";
+  }
+}
+
+async function saveShopSettings() {
+  const r = await apiFetch("/api/settings/shop", {
+    method: "PUT",
+    body: JSON.stringify({
+      wa_number: document.getElementById("s-wa").value.trim(),
+      upi_id:    document.getElementById("s-upi").value.trim(),
+      qr_img:    _pendingQR || (await apiFetch("/api/settings/"))?.qr_img || "",
+    }),
+  });
+  if (r) toast("✅ Settings saved!","success");
+}
+
+// QR Upload
+let qrMode = "file";
+let _pendingQR = "";
+
+function setQRMode(mode) {
+  qrMode = mode;
+  document.getElementById("qr-toggle-file").classList.toggle("active", mode==="file");
+  document.getElementById("qr-toggle-url").classList.toggle("active",  mode==="url");
+  document.getElementById("qr-file-wrap").style.display = mode==="file" ? "block" : "none";
+  document.getElementById("qr-url-wrap").style.display  = mode==="url"  ? "block" : "none";
+}
+
+function onQRFileChange() {
+  const file = document.getElementById("qr-file-input").files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _pendingQR = e.target.result;
+    const p = document.getElementById("qr-preview-img");
+    p.src = _pendingQR; p.classList.add("show");
+    document.getElementById("qr-preview-info").style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewQRUrl() {
+  const url = document.getElementById("qr-url-input").value.trim();
+  _pendingQR = url;
+  const p = document.getElementById("qr-preview-img");
+  if (url) { p.src=url; p.classList.add("show"); document.getElementById("qr-preview-info").style.display="block"; }
+}
+
+async function saveQR() {
+  if (!_pendingQR) { toast("❌ QR image select karo pehle!","error"); return; }
+  const current = await apiFetch("/api/settings/");
+  const r = await apiFetch("/api/settings/shop", {
+    method: "PUT",
+    body: JSON.stringify({
+      wa_number: current?.wa_number || "",
+      upi_id:    current?.upi_id    || "",
+      qr_img:    _pendingQR,
+    }),
+  });
+  if (r) toast("✅ QR Code saved!","success");
+}
+
+async function removeQR() {
+  _pendingQR = "";
+  const current = await apiFetch("/api/settings/");
+  await apiFetch("/api/settings/shop", {
+    method:"PUT",
+    body: JSON.stringify({ wa_number: current?.wa_number||"", upi_id: current?.upi_id||"", qr_img:"" }),
+  });
+  const p = document.getElementById("qr-preview-img");
+  p.src=""; p.classList.remove("show");
+  document.getElementById("qr-preview-info").style.display="none";
+  toast("🗑️ QR removed!","success");
+}
+
+async function saveCredentials() {
+  const u  = document.getElementById("s-user").value.trim();
+  const p  = document.getElementById("s-pass").value.trim();
+  const p2 = document.getElementById("s-pass2").value.trim();
+  if (!u||!p)  { toast("❌ Username aur password bhar do!","error"); return; }
+  if (p!==p2)  { toast("❌ Passwords match nahi karte!","error"); return; }
+  const r = await apiFetch("/api/settings/credentials", {
+    method:"PUT", body:JSON.stringify({ username:u, new_password:p }),
+  });
+  if (r) {
+    ["s-user","s-pass","s-pass2"].forEach(id => document.getElementById(id).value="");
+    toast("🔒 Credentials updated!","success");
+  }
+}
+
+async function exportJSON() {
+  const m = await apiFetch("/api/menu/all");
+  const blob = new Blob([JSON.stringify(m,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="menu.json"; a.click();
+}
+async function exportOrders() {
+  const o = await apiFetch("/api/orders/");
+  const blob = new Blob([JSON.stringify(o,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="orders.json"; a.click();
+}
+
+// ── CONFIRM MODAL ──────────────────────────────────────────────
+let _confirmCb = null;
+function showConfirm(title, msg, cb) {
+  _confirmCb = cb;
+  document.getElementById("confirm-title").textContent = title;
+  document.getElementById("confirm-msg").textContent   = msg;
+  document.getElementById("confirm-yes-btn").onclick   = () => { _confirmCb&&_confirmCb(); closeConfirm(); };
+  document.getElementById("confirm-modal").classList.add("open");
+}
+function closeConfirm() { document.getElementById("confirm-modal").classList.remove("open"); }
+
+// ── TOAST ──────────────────────────────────────────────────────
+function toast(msg, type="success") {
+  const t = document.getElementById("toast");
+  t.textContent=msg; t.className=`show ${type}`;
+  clearTimeout(t._t); t._t=setTimeout(()=>{t.className="";},3200);
+}
+</script>
+</body>
